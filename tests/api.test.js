@@ -27,20 +27,30 @@ testApp.post('/fetch', async (req, res) => {
     // Use cheerio to parse HTML and selectively replace text content, not URLs
     const $ = require('cheerio').load(html);
     
+    // Function to preserve case when replacing Yale with Fale
+    function replaceWithCasePreserved(text) {
+      return text.replace(/Yale/gi, function(match) {
+        if (match === 'YALE') return 'FALE';
+        if (match === 'Yale') return 'Fale';
+        if (match === 'yale') return 'fale';
+        return 'Fale'; // default
+      });
+    }
+    
     // Process text nodes in the body
     $('body *').contents().filter(function() {
       return this.nodeType === 3; // Text nodes only
     }).each(function() {
       // Replace text content but not in URLs or attributes
       const text = $(this).text();
-      const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+      const newText = replaceWithCasePreserved(text);
       if (text !== newText) {
         $(this).replaceWith(newText);
       }
     });
     
     // Process title separately
-    const title = $('title').text().replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+    const title = replaceWithCasePreserved($('title').text());
     $('title').text(title);
     
     return res.json({ 
